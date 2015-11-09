@@ -11,10 +11,15 @@ use T24\Handler\ExecutionContext;
 use Symfony\Component\EventDispatcher\Event;
 use T24\SqsEvents;
 use Aws\Sqs\SqsClient;
+use T24\Event\SqsMessageReceivedEvent;
+use T24\Event\ConfigEvent;
 
 class SqsAgent
 {
 
+    /**
+     * @var SqsAgentConfig
+     */
     protected $config;
 
     /**
@@ -22,9 +27,12 @@ class SqsAgent
      */
     protected $context;
 
-    function __construct($config, ExecutionContext $context) {
+    function __construct(SqsAgentConfig $config, ExecutionContext $context) {
         $this->config = $config;
         $this->context = $context;
+
+        $event = new ConfigEvent($config);
+        $context->getEventDispatcher()->dispatch(SqsEvents::EVENT_SQSAGENT_CONFIGURE, $event);
 
     }
 
@@ -50,7 +58,7 @@ class SqsAgent
         // generate an array with handlers
         $writeln('Loading handlers');
         $handlers = [];
-        $handlersDir = $options['base_dir'] . '/handlers';
+        $handlersDir = $options->handlers_dir;
         $finder = new \Symfony\Component\Finder\Finder();
         foreach ($finder->in($handlersDir)->name('*.php')->sortByName() as $file) {
 
@@ -86,25 +94,25 @@ class SqsAgent
 
 
         // @todo: get aws params.
-        $region = 'eu-west-1';
-        $sqsQueueUrl = 'https://sqs.eu-west-1.amazonaws.com/442264058139/nl-vm-ec2agent';
+        $region = '';
+        $sqsQueueUrl = '';
         $sqs = SqsClient::factory(
             [
-                'region' => $region,
+                'region' => $options->aws_region,
                 'version' => '2012-11-05',
                 'credentials' => [
-                    'key' => '',
-                    'secret' => '',
+                    'key' => $options->aws_key,
+                    'secret' => $options->aws_secret,
                 ]
             ]
         );
 
 
         // start the process
-        $ttl = (int)$options['ttl'];
+        $ttl = (int)$options->ttl;
         $ttl = min($ttl, 300);
         $ttl = max($ttl, 5);
-        $sleep = (int)$options['sleep'];
+        $sleep = (int)$options->sleep;
         $sleep = min($sleep, $ttl - 5);
         $sleep = max($sleep, 0);
 
@@ -118,7 +126,7 @@ class SqsAgent
             $writeln($c('Polling Sqs for messages'));
             $result = $sqs->receiveMessage(
                 [
-                    'QueueUrl' => $sqsQueueUrl,
+                    'QueueUrl' => $options->sqs_queue_url,
                     'AttributeNames' => ['All'],
                     'MessageAttributeNames' => ['All'],
                     'MaxNumberOfMessages' => 1
@@ -132,7 +140,7 @@ class SqsAgent
                 foreach ($result['Messages'] as $message) {
                     // set up an event that the message is received.
                     // the default subscriber will pass the event to the event handlers in the handlers dir
-                    $event = new T24\Event\SqsMessageReceivedEvent($context, $message);
+                    $event = new SqsMessageReceivedEvent($context, $message);
                     $context->getEventDispatcher()->dispatch(SqsEvents::EVENT_SQSAGENT_SQSMESSAGERECEIVED, $event);
 
                     /*

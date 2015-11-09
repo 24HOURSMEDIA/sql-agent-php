@@ -7,7 +7,8 @@ require __DIR__ . '/../vendor/autoload.php';
 use T24\Handler\ExecutionContext;
 use T24\SqsEvents;
 use T24\SqsAgent;
-
+use T24\SqsAgentConfig;
+use T24\Event\ConfigEvent;
 // first define the execution context of the command
 // this primarily contains an event dispatcher for hooking into the command's execution flow
 // you can specify your own execution context by wrapping this script in a script that defines a custom context.
@@ -25,18 +26,24 @@ if (!$context instanceof ExecutionContext) {
 }
 
 
-use \Aws\Sqs\SqsClient;
+
+
 
 // php file.php ./assets/example.txt
 ini_set('display_errors', 1);
 $cmd = new Commando\Command();
 $cmd->setHelp('sqs agent')
     ->option('ttl')
-    ->defaultsTo(45)
+   // ->defaultsTo(45)
     ->describedAs('sets the ttl / runtime of the script. Defaults to 45 (in seconds)')
     ->option('sleep')
-    ->defaultsTo(3)
-    ->describedAs('sets the time to rest between two message retrievals. Defaults to 3 (in seconds)');
+    ->defaultsTo(null)
+    ->describedAs('sets the time to rest between two message retrievals. Defaults to 3 (in seconds)')
+    ->option('config')
+    ->defaultsTo(null)
+    ->describedAs('configuration file')
+
+;
 
 $run = function () use ($cmd, $context) {
 
@@ -47,12 +54,40 @@ $run = function () use ($cmd, $context) {
     }
     $options['base_dir'] = __DIR__ . '/../';
 
-    // send the configure event. cmd options are passed in the event and may be modified there (i.e. ttl, sleep...)
-    $event = new \T24\Event\AgentEvent($context);
-    $event->setParam('options', $options);
-    $context->getEventDispatcher()->dispatch(SqsEvents::EVENT_SQSAGENT_CONFIGURE, $event);
-    $options = $event->getParam('options');
-    $agent = new SqsAgent($options, $context);
+    // for this binary, subscribe to some configuration events to load config files etc.
+
+    // first, load the configuration file
+    $context->getEventDispatcher()->addListener(SqsEvents::EVENT_SQSAGENT_CONFIGURE, function(ConfigEvent $event) use ($options) {
+        if ($options['config']) {
+            $newCfg = json_decode(file_get_contents($options['config']), true);
+            if (!$newCfg) {
+                throw new RuntimeException('could not load config file ' . $options['config']);
+            }
+            $event->getConfig()->merge($newCfg);
+        }
+    });
+
+    // then, overwrite configuration options from the command line arguments
+    $context->getEventDispatcher()->addListener(SqsEvents::EVENT_SQSAGENT_CONFIGURE, function(ConfigEvent $event) use ($options) {
+        $c = $event->getConfig();
+        if ($options['ttl']) {
+            $c->ttl = $options['ttl'];
+        }
+        if ($options['sleep']) {
+            $c->ttl = $options['ttl'];
+        }
+    });
+
+
+
+    // configure with default configuration, and events.
+    $config = new SqsAgentConfig();
+
+
+
+
+
+    $agent = new SqsAgent($config, $context);
     $agent->run();
 };
 

@@ -47,11 +47,9 @@ class SqsAgentConfig
      */
     public $sqs_queue_url;
 
-    /**
-     * Base dir to resolve directories from
-     * @var
-     */
-    public $base_dir;
+
+
+    public $handlers_dir = 'handlers';
 
     /**
      * Time for the agent to run in seconds
@@ -65,5 +63,14 @@ class SqsAgentConfig
      */
     public $sleep = 3;
 
+
+    function merge(array $options) {
+        foreach ($options as $k => $v) {
+            if (property_exists($this, $k)) {
+                $this->{$k} = $v;
+            }
+        }
+
+    }
 
 }
