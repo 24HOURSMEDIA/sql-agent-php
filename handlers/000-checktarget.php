@@ -18,19 +18,15 @@
    }
    }
 */
+use T24\Event\AbstractMessageReceivedEvent;
 
-return function (\T24\Event\SqsMessageReceivedEvent $event) use ($color) {
+return function (AbstractMessageReceivedEvent $event) use ($color) {
 
     $event->addComment('testing if the event is targeted at this ec2 instance.');
     // check if target_instance is the current instance
-    $sqsMessage = $event->getSqsMessage();
+    $message = $event->getMessage();
 
-    $message = json_decode($sqsMessage['Body'], true);
-    if (!$message) {
-        $event->addComment($color->red('no json decodable body found in the message'));
-        $event->stopPropagation();
-        return;
-    }
+
 
     $thisInstanceId = 'i-3bc63696';
     if (isset($message['target_type'] , $message['target_instance']) && $message['target_type'] == 'ec2') {

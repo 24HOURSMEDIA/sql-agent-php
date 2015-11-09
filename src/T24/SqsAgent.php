@@ -38,7 +38,7 @@ class SqsAgent
 
     function run() {
 
-        $options = $this->config;
+        $config = $this->config;
         $context = $this->context;
 
         /* @var $context ExecutionContext */
@@ -58,7 +58,7 @@ class SqsAgent
         // generate an array with handlers
         $writeln('Loading handlers');
         $handlers = [];
-        $handlersDir = $options->handlers_dir;
+        $handlersDir = $config->handlers_dir;
         if ($handlersDir) {
             $finder = new \Symfony\Component\Finder\Finder();
             foreach ($finder->in($handlersDir)->name('*.php')->sortByName() as $file) {
@@ -102,21 +102,21 @@ class SqsAgent
         $sqsQueueUrl = '';
         $sqs = SqsClient::factory(
             [
-                'region' => $options->aws_region,
+                'region' => $config->aws_region,
                 'version' => '2012-11-05',
                 'credentials' => [
-                    'key' => $options->aws_key,
-                    'secret' => $options->aws_secret,
+                    'key' => $config->aws_key,
+                    'secret' => $config->aws_secret,
                 ]
             ]
         );
 
 
         // start the process
-        $ttl = (int)$options->ttl;
+        $ttl = (int)$config->ttl;
         $ttl = min($ttl, 300);
         $ttl = max($ttl, 5);
-        $sleep = (int)$options->sleep;
+        $sleep = (int)$config->sleep;
         $sleep = min($sleep, $ttl - 5);
         $sleep = max($sleep, 0);
 
@@ -130,13 +130,13 @@ class SqsAgent
             $writeln($c('Polling Sqs for messages'));
             $result = $sqs->receiveMessage(
                 [
-                    'QueueUrl' => $options->sqs_queue_url,
+                    'QueueUrl' => $config->sqs_queue_url,
                     'AttributeNames' => ['All'],
                     'MessageAttributeNames' => ['All'],
                     'MaxNumberOfMessages' => 1
                 ]
             );
-            /* @var $result Aws\Result */
+            /* @var $result \Aws\Result */
             if (!$result['Messages'] || ($result['Messages']) == 0) {
                 $writeln($c('no messages found in sqs queue'));
             } else {
@@ -154,13 +154,13 @@ class SqsAgent
                     }
                     */
 
-                    if ($event->getRemoveFromSqs()) {
+                    if ($event->getRemoveFromQueue()) {
                         $writeln('  - the event handlers indicate the sqs message should  be removed from the queue.');
                         // remove from sqs
                         $sqsMessage = $event->getSqsMessage();
                         $removed = $sqs->deleteMessage(
                             [
-                                'QueueUrl' => $sqsQueueUrl,
+                                'QueueUrl' => $config->sqs_queue_url,
                                 'ReceiptHandle' => $sqsMessage['ReceiptHandle']
                             ]
                         );

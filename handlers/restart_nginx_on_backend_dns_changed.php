@@ -1,16 +1,14 @@
 <?php
+use T24\Event\AbstractMessageReceivedEvent;
 
 /**
  * Restarts nginx when an event message is polled from sqs with the event_id 'backend_dns_changed'
  */
-return function(\T24\Event\SqsMessageReceivedEvent $event) use ($color)  {
-    $sqsMessage = $event->getSqsMessage();
-    $message = json_decode($sqsMessage['Body'], true);
-    if (!$message) {
-        $event->addComment($color->red('no message attribute found in the sqs message.'));
-        $event->stopPropagation();
-        return;
-    }
+return function(AbstractMessageReceivedEvent $event) use ($color)  {
+
+    $message = $event->getMessage();
+
+
     if ($message['type'] == 'event' && in_array($message['event_id'], [
             // legacy
             'backend_dns_changed'
