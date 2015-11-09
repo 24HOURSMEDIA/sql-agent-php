@@ -6,7 +6,7 @@
 
 namespace T24\Event;
 
-use T24\Handler\ExecutionContext;
+use T24\Context\ExecutionContext;
 
 class SqsMessageReceivedEvent extends AbstractMessageReceivedEvent {
 

@@ -4,7 +4,7 @@
  */
 
 require __DIR__ . '/../vendor/autoload.php';
-use T24\Handler\ExecutionContext;
+use T24\Context\ExecutionContext;
 use T24\SqsEvents;
 use T24\SqsAgent;
 use T24\SqsAgentConfig;
@@ -15,7 +15,7 @@ use T24\Event\ConfigEvent;
 // for example, you can set a DIC in the context that then becomes available to event handlers through $event->getContext()['container']
 // i.e. prototypic to inject a symfony container and event dispatcher in the context:
 // <?php
-// $context = T24\Handler\ExecutionContext::create();
+// $context = T24\Context\ExecutionContext::create();
 // $context['container'] = $app->getContainer();
 // $context->setEventDispatcher($app->getContainer()->get['event_dispatcher']);
 // require('run-agent.php');

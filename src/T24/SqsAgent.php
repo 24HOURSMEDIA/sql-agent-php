@@ -7,7 +7,7 @@
 namespace T24;
 
 
-use T24\Handler\ExecutionContext;
+use T24\Context\ExecutionContext;
 use Symfony\Component\EventDispatcher\Event;
 use T24\SqsEvents;
 use Aws\Sqs\SqsClient;

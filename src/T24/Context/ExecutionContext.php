@@ -4,7 +4,7 @@
  * Date: 08/11/15
  */
 
-namespace T24\Handler;
+namespace T24\Context;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
