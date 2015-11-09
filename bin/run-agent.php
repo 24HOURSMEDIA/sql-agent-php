@@ -83,9 +83,8 @@ $run = function () use ($cmd, $context) {
     // configure with default configuration, and events.
     $config = new SqsAgentConfig();
 
-
-
-
+    $event = new ConfigEvent($config);
+    $context->getEventDispatcher()->dispatch(SqsEvents::EVENT_SQSAGENT_CONFIGURE, $event);
 
     $agent = new SqsAgent($config, $context);
     $agent->run();

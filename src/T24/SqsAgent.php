@@ -35,8 +35,7 @@ class SqsAgent
 
         $this->name = &$this->config->agent_name;
 
-        $event = new ConfigEvent($config);
-        $context->getEventDispatcher()->dispatch(SqsEvents::EVENT_SQSAGENT_CONFIGURE, $event);
+
 
     }
 
