@@ -1,0 +1,29 @@
+{
+    "name": "24hoursmedia/dd",
+    "description": "PHP CLI Commando Style",
+    "homepage": "http://github.com/nategood/commando",
+    "license": "MIT",
+    "keywords": ["cli", "command line", "command", "command line interface", "scripting", "automation"],
+    "authors": [
+        {
+            "name": "E.Bachman / 24hoursmedia",
+            "email": "info@24hoursmedia.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "kevinlebrun/colors.php": "0.2.*",
+        "Symfony/Filesystem": "^2.7",
+        "Symfony/Stopwatch": "^2.7",
+        "nategood/commando": "^0.2.7",
+        "symfony/finder": "^2.7",
+        "aws/aws-sdk-php": "^3.9",
+        "symfony/event-dispatcher": "^2.7"
+
+    },
+    "version": "0.2.7",
+    "autoload": {
+        "psr-0": { "": "src/" },
+        "psr-4": { "": "src/" }
+    }
+}
