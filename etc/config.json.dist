@@ -1,0 +1,8 @@
+{
+  "agent_name": "my agent",
+  "aws_key": "",
+  "aws_secret": "",
+  "aws_region": "",
+  "sqs_queue_url": "",
+  "handlers_dir": ""
+}

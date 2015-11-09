@@ -59,39 +59,43 @@ class SqsAgent
         $writeln('Loading handlers');
         $handlers = [];
         $handlersDir = $options->handlers_dir;
-        $finder = new \Symfony\Component\Finder\Finder();
-        foreach ($finder->in($handlersDir)->name('*.php')->sortByName() as $file) {
+        if ($handlersDir) {
+            $finder = new \Symfony\Component\Finder\Finder();
+            foreach ($finder->in($handlersDir)->name('*.php')->sortByName() as $file) {
 
-            /* @var $file \SplFileInfo */
-            $handlerId = $file->getBasename('.php');
-            $handler = include($file);
-            $handlers[$handlerId]  = $handler;
-            $writeln('  setting up handler ' . $color($handlerId)->bold() . $color->yellow(' (in ' . $file . ')'));
-            $context->getEventDispatcher()->addListener(
-                SqsEvents::EVENT_SQSAGENT_SQSMESSAGERECEIVED,
-                function (\T24\Event\SqsMessageReceivedEvent $event) use ($write, $writeln, $color, $handler, $handlerId) {
-                    $writeln($color->bg('blue', $color->white('invoking handler ' . $handlerId . ' for event EVENT_SQSAGENT_SQSMESSAGERECEIVED')));
-                    /* @var Callable $handler */
-                    $result = $handler($event);
-                    // write comments
-                    $comments = $event->getComments();
-                    foreach ($comments as $comment) {
-                        $writeln($color('  comment: ')->yellow() . $comment);
+                /* @var $file \SplFileInfo */
+                $handlerId = $file->getBasename('.php');
+                $handler = include($file);
+                $handlers[$handlerId] = $handler;
+                $writeln('  setting up handler ' . $color($handlerId)->bold() . $color->yellow(' (in ' . $file . ')'));
+                $context->getEventDispatcher()->addListener(
+                    SqsEvents::EVENT_SQSAGENT_SQSMESSAGERECEIVED,
+                    function (\T24\Event\SqsMessageReceivedEvent $event) use ($write, $writeln, $color, $handler, $handlerId) {
+                        $writeln($color->bg('blue', $color->white('invoking handler ' . $handlerId . ' for event EVENT_SQSAGENT_SQSMESSAGERECEIVED')));
+                        /* @var Callable $handler */
+                        $result = $handler($event);
+                        // write comments
+                        $comments = $event->getComments();
+                        foreach ($comments as $comment) {
+                            $writeln($color('  comment: ')->yellow() . $comment);
+                        }
+                        $writeln('  - handler ' . $handlerId . ' had been invoked.');
+                        if ($event->isPropagationStopped()) {
+                            $writeln('  - ' . $color->red('the event was stopped from further propagation.'));
+
+                        } else {
+                            $writeln('  - the event was not stopped. proceed to next handler');
+                        }
+
+                        return $result;
                     }
-                    $writeln('  - handler ' . $handlerId . ' had been invoked.');
-                    if ($event->isPropagationStopped()) {
-                        $writeln('  - ' . $color->red('the event was stopped from further propagation.'));
+                );
 
-                    } else {
-                        $writeln('  - the event was not stopped. proceed to next handler');
-                    }
-                    return $result;
-                }
-            );
-
+            }
+            $writeln('Loaded ' . count($handlers) . '  handlers.');
+        } else {
+            $writeln('default handlers dir not specified, no handlers defined..');
         }
-        $writeln('Loaded ' . count($handlers) . '  handlers.');
-
 
         // @todo: get aws params.
         $region = '';

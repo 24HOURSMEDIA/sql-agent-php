@@ -49,7 +49,7 @@ class SqsAgentConfig
 
 
 
-    public $handlers_dir = 'handlers';
+    public $handlers_dir = '';
 
     /**
      * Time for the agent to run in seconds
