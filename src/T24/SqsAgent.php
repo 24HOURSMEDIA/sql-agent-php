@@ -27,9 +27,13 @@ class SqsAgent
      */
     protected $context;
 
+    protected $name = 'default-sqs-agent';
+
     function __construct(SqsAgentConfig $config, ExecutionContext $context) {
         $this->config = $config;
         $this->context = $context;
+
+        $this->name = &$this->config->agent_name;
 
         $event = new ConfigEvent($config);
         $context->getEventDispatcher()->dispatch(SqsEvents::EVENT_SQSAGENT_CONFIGURE, $event);
@@ -53,7 +57,7 @@ class SqsAgent
         $c = $color = new \Colors\Color();
         /* @var $c \Colors\Color */
 
-        $writeln($c('Running agent')->bold());
+        $writeln($c('Running agent `' . $this->name)->bold().'`');
 
         // generate an array with handlers
         $writeln('Loading handlers');
