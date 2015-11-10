@@ -16,4 +16,11 @@ final class SqsEvents
     //const EVENT_SQSAGENT_SQSMESSAGEHANDLED = 'sqsagent.message_handled';
     //const EVENT_SQSAGENT_SQSMESSAGEPROCESSED = 'sqsagent.message_processed';
 
+    static function generateEventForAgentId($eventId,$agentId) {
+
+        return str_replace('sqsagent.', 'sqsagent.' . $agentId . '.', $eventId);
+
+
+    }
+
 }

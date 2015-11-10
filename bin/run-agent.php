@@ -80,11 +80,16 @@ $run = function () use ($cmd, $context) {
 
 
 
+
     // configure with default configuration, and events.
     $config = new SqsAgentConfig();
 
     $event = new ConfigEvent($config);
     $context->getEventDispatcher()->dispatch(SqsEvents::EVENT_SQSAGENT_CONFIGURE, $event);
+    // check if the config has an id for the agent
+    if (!$config->agent_id) {
+        throw new \RuntimeException('The configuration MUST specify an agent id, none given');
+    }
 
     $agent = new SqsAgent($config, $context);
     $agent->run();

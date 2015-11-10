@@ -27,20 +27,52 @@ class SqsAgent
      */
     protected $context;
 
-    protected $name = 'default-sqs-agent';
+    protected $id = 'default-sqs-agent';
+
+    protected $name = 'SQS Agent';
 
     function __construct(SqsAgentConfig $config, ExecutionContext $context) {
         $this->config = $config;
         $this->context = $context;
-
-        $this->name = &$this->config->agent_name;
-
-
-
+        $this->id = $config->agent_id;
+        $this->name = $config->agent_name;
     }
 
-    function run() {
+    /**
+     * @return string
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
 
+    /**
+     * @param string $id
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param string $name
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+    }
+
+
+
+    function run() {
         $config = $this->config;
         $context = $this->context;
 
@@ -71,10 +103,13 @@ class SqsAgent
                 $handler = include($file);
                 $handlers[$handlerId] = $handler;
                 $writeln('  setting up handler ' . $color($handlerId)->bold() . $color->yellow(' (in ' . $file . ')'));
+
+                $eventName = SqsEvents::generateEventForAgentId(SqsEvents::EVENT_SQSAGENT_SQSMESSAGERECEIVED, $this->getId());
+
                 $context->getEventDispatcher()->addListener(
-                    SqsEvents::EVENT_SQSAGENT_SQSMESSAGERECEIVED,
-                    function (\T24\Event\SqsMessageReceivedEvent $event) use ($write, $writeln, $color, $handler, $handlerId) {
-                        $writeln($color->bg('blue', $color->white('invoking handler ' . $handlerId . ' for event EVENT_SQSAGENT_SQSMESSAGERECEIVED')));
+                    $eventName,
+                    function (\T24\Event\SqsMessageReceivedEvent $event) use ($write, $writeln, $color, $handler, $handlerId, $eventName) {
+                        $writeln($color->bg('blue', $color->white('invoking handler ' . $handlerId . ' for event ' . $eventName)));
                         /* @var Callable $handler */
                         $result = $handler($event);
                         // write comments
@@ -150,6 +185,8 @@ class SqsAgent
                     $event = new SqsMessageReceivedEvent($context, $message);
                     $context->getEventDispatcher()->dispatch(SqsEvents::EVENT_SQSAGENT_SQSMESSAGERECEIVED, $event);
 
+                    $context->getEventDispatcher()->dispatch(SqsEvents::generateEventForAgentId(SqsEvents::EVENT_SQSAGENT_SQSMESSAGERECEIVED, $this->getId()), $event);
+
                     /*
                     $context->getEventDispatcher()->dispatch(SqsEvents::EVENT_SQSAGENT_SQSMESSAGEHANDLED, $event2);
                     if ($event->isProcessed()) {
@@ -188,6 +225,7 @@ class SqsAgent
         // send the finish event.
         $event = new \T24\Event\AgentEvent($context);
         $context->getEventDispatcher()->dispatch(SqsEvents::EVENT_SQSAGENT_FINISH, $event);
+        $context->getEventDispatcher()->dispatch(SqsEvents::generateEventForAgentId(SqsEvents::EVENT_SQSAGENT_FINISH, $this->getId()), $event);
     }
 
 }

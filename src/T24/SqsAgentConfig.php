@@ -18,6 +18,12 @@ class SqsAgentConfig
 {
 
     /**
+     * unique agent id, so event handlers can differentiate between different agents
+     * @var string
+     */
+    public $agent_id = '';
+
+    /**
      * Agent name (Appears in logs etc).
      * You can have several agents running, by giving them different names you
      * differentiate
@@ -63,6 +69,9 @@ class SqsAgentConfig
      */
     public $sleep = 3;
 
+    function __construct() {
+
+    }
 
     function merge(array $options) {
         foreach ($options as $k => $v) {
